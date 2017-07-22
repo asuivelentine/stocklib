@@ -10,10 +10,8 @@
        unused_qualifications,
        while_true,
        unsafe_code)]
-#[test]
 
 extern crate select;
 extern crate reqwest;
 
-fn it_works() {
-}
+pub mod stock;
