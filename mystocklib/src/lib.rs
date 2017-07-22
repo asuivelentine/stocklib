@@ -12,6 +12,8 @@
        unsafe_code)]
 #[test]
 
+extern crate select;
+extern crate reqwest;
 
 fn it_works() {
 }
