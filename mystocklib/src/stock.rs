@@ -1,7 +1,7 @@
 use std::convert::Into;
 
-#[derive(Debug, Clone, PartialEq)]
-struct Stock {
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct Stock {
     name: String,
     value: f32,
 }
