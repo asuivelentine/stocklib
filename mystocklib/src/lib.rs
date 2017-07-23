@@ -13,5 +13,7 @@
 
 extern crate select;
 extern crate reqwest;
+extern crate regex;
 
 pub mod stock;
+pub mod dax;
