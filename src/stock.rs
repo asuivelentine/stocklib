@@ -17,7 +17,6 @@ impl Into<f32> for Stock {
     fn into(self) -> f32 {
         self.value
     }
-
 }
 
 impl PartialOrd for Stock {
