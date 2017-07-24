@@ -1,6 +1,7 @@
 use std::convert::Into;
+use std::cmp::{ PartialOrd, Ordering };
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Stock {
     name: String,
     value: f32,
@@ -17,6 +18,25 @@ impl Into<f32> for Stock {
         self.value
     }
 
+}
+
+impl PartialOrd for Stock {
+    fn partial_cmp(&self, other: &Stock) -> Option<Ordering> {
+        self.value.partial_cmp(&other.value)
+    }
+
+    fn lt(&self, other: &Stock) -> bool {
+        self.value < other.value
+    }
+    fn le(&self, other: &Stock) -> bool {
+        self.value <= other.value
+    }
+    fn gt(&self, other: &Stock) -> bool {
+        self.value > other.value
+    }
+    fn ge(&self, other: &Stock) -> bool {
+        self.value >= other.value
+    }
 }
 
 impl Stock {
@@ -62,5 +82,23 @@ mod tests {
         let value: f32 = stockA.into();
 
         assert_eq!(value, 45.43);
+    }
+
+    #[test]
+    fn lt() {
+        let stockA = Stock::new("a", 123.0);
+        let stockB = Stock::new("b", 124.0);
+
+        assert!(stockA < stockB);
+        assert!(!(stockB < stockA));
+    }
+
+    #[test]
+    fn le_ge() {
+        let stockA = Stock::new("a", 123.0);
+        let stockB = Stock::new("b", 123.0);
+
+        assert!(stockA <= stockB);
+        assert!(stockA >= stockB);
     }
 }
