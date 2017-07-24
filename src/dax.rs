@@ -1,4 +1,5 @@
 use stock::Stock;
+use std::convert::Into;
 
 use std::fmt::{ Formatter, Debug, Error };
 
@@ -7,25 +8,36 @@ use select::document::Document;
 use select::predicate::Class;
 use regex::{RegexBuilder};
 
-pub struct Dax { dax: Vec<Stock> }
+pub struct Dax { 
+    indizes: Vec<Stock>,
+    value: f32,
+}
 
 impl Debug for Dax {
     fn fmt(&self, _: &mut Formatter) -> Result<(), Error> {
-        for s in &self.dax {
+        println!("Dax: {}", self.value);
+        for s in &self.indizes{
             println!("{:?}", s);
         }
         Ok(())
     }
 }
 
+impl Into<f32> for Dax {
+    fn into(self) -> f32 {
+        self.value
+    }
+}
+
 impl Dax {
     pub fn new() -> Dax {
         Dax {
-            dax: Dax::scape()
+            indizes: Dax::scape_indizes(),
+            value: 0.0
         }
     }
 
-    fn scape() -> Vec<Stock> {
+    fn scape_indizes() -> Vec<Stock> {
         let res = reqwest::get("http://www.boerse-online.de/index/liste/DAX")
             .map_err(|_| ())
             .and_then(|r| Document::from_read(r)
@@ -61,7 +73,7 @@ impl Dax {
     pub fn find<S: Into<String>>(&self, name: S) -> Option<&Stock> {
         let n = name.into();
 
-        self.dax
+        self.indizes
             .iter()
             .find(|&s| {
                 let xn: String = s.clone().into();
