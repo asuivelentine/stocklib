@@ -1,11 +1,22 @@
 use stock::Stock;
+
+use std::fmt::{ Formatter, Debug, Error };
+
 use reqwest;
 use select::document::Document;
 use select::predicate::{Attr, Name, And, Class};
 use regex::{RegexBuilder, Regex};
 
-#[derive(Debug)]
 pub struct Dax { dax: Vec<Stock> }
+
+impl Debug for Dax {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        for s in &self.dax {
+            println!("{:?}", s);
+        }
+        Ok(())
+    }
+}
 
 impl Dax {
     pub fn new() -> Dax {
