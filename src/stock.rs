@@ -3,6 +3,9 @@ use std::cmp::{ PartialOrd, Ordering };
 use std::ops::Drop;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::os::unix::io::AsRawFd;
+
+use nix::fcntl::{ flock, FlockArg };
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stock {
@@ -36,7 +39,9 @@ impl Drop for Stock {
 
         if let Ok(mut f) = f {
             let val: String = format!("{}\n", self.value);
-            f.write(val.as_bytes());
+            flock(f.as_raw_fd(), FlockArg::LockExclusive)
+                .map(|_| f.write(val.as_bytes()))
+                .map(|_| drop(f) );
         }
     }
 }

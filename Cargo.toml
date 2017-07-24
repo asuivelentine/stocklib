@@ -7,3 +7,4 @@ authors = ["Kai Sickeler <k.sickeler@gmail.com>"]
 select = "0.4.2"
 reqwest = "0.7.1"
 regex = "0.2.2"
+nix = "0.9.0"
