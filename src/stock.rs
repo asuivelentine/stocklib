@@ -1,5 +1,8 @@
 use std::convert::Into;
 use std::cmp::{ PartialOrd, Ordering };
+use std::ops::Drop;
+use std::fs::OpenOptions;
+use std::io::Write;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stock {
@@ -9,13 +12,32 @@ pub struct Stock {
 
 impl Into<String> for Stock{
     fn into(self) -> String {
-        self.name
+        self.name.clone()
     }
 }
 
 impl Into<f32> for Stock {
     fn into(self) -> f32 {
         self.value
+    }
+}
+
+impl Drop for Stock {
+    fn drop(&mut self) {
+        let store = "/home/asui/.config/stockdata/";
+        let path: String = format!("{}{}", store, self.name);
+
+        let f = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .append(true)
+            .create(true)
+            .open(path);
+
+        if let Ok(mut f) = f {
+            let val: String = format!("{}\n", self.value);
+            f.write(val.as_bytes());
+        }
     }
 }
 
