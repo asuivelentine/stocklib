@@ -5,8 +5,8 @@ use std::fmt::{ Formatter, Debug, Error };
 
 use reqwest;
 use select::document::Document;
-use select::predicate::Class;
-use regex::{RegexBuilder};
+use select::predicate::{Class, Attr};
+use regex::{RegexBuilder, Regex};
 
 pub struct Dax { 
     indizes: Vec<Stock>,
@@ -31,29 +31,35 @@ impl Into<f32> for Dax {
 
 impl Dax {
     pub fn new() -> Dax {
+        let html = Dax::download_source();
+        if html.is_err() {
+            return Dax {
+                indizes: Vec::new(),
+                value: -1.234
+            }
+        }
+
+        let source = html.unwrap();
         Dax {
-            indizes: Dax::scape_indizes(),
-            value: 0.0
+            indizes: Dax::scape_indizes(&source),
+            value: Dax::scape_value(&source)
         }
     }
 
-    fn scape_indizes() -> Vec<Stock> {
-        let res = reqwest::get("http://www.boerse-online.de/index/liste/DAX")
+    fn download_source() -> Result<Document, ()> {
+        reqwest::get("http://www.boerse-online.de/index/liste/DAX")
             .map_err(|_| ())
             .and_then(|r| Document::from_read(r)
-                .map_err(|_| ()));
+                .map_err(|_| ()))
+    }
 
-        if res.is_err() {
-            return Vec::new();
-        }
-        let d = res.unwrap();
-
+    fn scape_indizes(src: &Document) -> Vec<Stock> {
         let pat = RegexBuilder::new(r"/aktie/(.*)-Aktie.*\n(.*\n)*?(\d+,\d+)")
             .multi_line(true)
             .build()
             .unwrap();
 
-        let x: String = d.find(Class("table-hover"))
+        let x: String = src.find(Class("table-hover"))
             .next()
             .map(|x| x.html())
             .unwrap_or(String::new());
@@ -68,6 +74,26 @@ impl Dax {
                 Stock::new(name, value)
             })
             .collect()
+    }
+
+    fn scape_value(src: &Document) -> f32 {
+        let pat = Regex::new(r"\d+.\d+,\d").unwrap();
+
+        let val: String = src.find(Attr("data-item", "Y0306000000XTDAX"))
+            .skip(1)
+            .next()
+            .map(|x| x.html())
+            .unwrap_or(String::new());
+
+        pat.captures(&val)
+            .and_then(|v| {
+                String::from(&v[0])
+                    .replace(".", "")
+                    .replace(",", ".")
+                    .parse()
+                    .ok()
+            })
+            .unwrap_or(-1.234)
     }
 
     pub fn find<S: Into<String>>(&self, name: S) -> Option<&Stock> {
