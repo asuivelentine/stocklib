@@ -57,4 +57,15 @@ impl Dax {
             })
             .collect()
     }
+
+    pub fn find<S: Into<String>>(&self, name: S) -> Option<&Stock> {
+        let n = name.into();
+
+        self.dax
+            .iter()
+            .find(|&s| {
+                let xn: String = s.clone().into();
+                xn.to_uppercase() == n.to_uppercase()
+            })
+    }
 }
