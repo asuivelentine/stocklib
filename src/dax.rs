@@ -4,13 +4,13 @@ use std::fmt::{ Formatter, Debug, Error };
 
 use reqwest;
 use select::document::Document;
-use select::predicate::{Attr, Name, And, Class};
-use regex::{RegexBuilder, Regex};
+use select::predicate::Class;
+use regex::{RegexBuilder};
 
 pub struct Dax { dax: Vec<Stock> }
 
 impl Debug for Dax {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+    fn fmt(&self, _: &mut Formatter) -> Result<(), Error> {
         for s in &self.dax {
             println!("{:?}", s);
         }
