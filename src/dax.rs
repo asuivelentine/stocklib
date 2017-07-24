@@ -41,8 +41,8 @@ impl Dax {
 
         let source = html.unwrap();
         Dax {
-            indizes: Dax::scape_indizes(&source),
-            value: Dax::scape_value(&source)
+            indizes: Dax::scrape_indizes(&source),
+            value: Dax::scrape_value(&source)
         }
     }
 
@@ -53,7 +53,7 @@ impl Dax {
                 .map_err(|_| ()))
     }
 
-    fn scape_indizes(src: &Document) -> Vec<Stock> {
+    fn scrape_indizes(src: &Document) -> Vec<Stock> {
         let pat = RegexBuilder::new(r"/aktie/(.*)-Aktie.*\n(.*\n)*?(\d+,\d+)")
             .multi_line(true)
             .build()
@@ -76,7 +76,7 @@ impl Dax {
             .collect()
     }
 
-    fn scape_value(src: &Document) -> f32 {
+    fn scrape_value(src: &Document) -> f32 {
         let pat = Regex::new(r"\d+.\d+,\d").unwrap();
 
         let val: String = src.find(Attr("data-item", "Y0306000000XTDAX"))
