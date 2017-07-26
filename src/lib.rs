@@ -18,4 +18,5 @@ extern crate regex;
 pub mod stock;
 pub mod dax;
 pub mod mdax;
+pub mod techdax;
 pub mod stoxx50e;
