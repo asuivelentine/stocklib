@@ -4,6 +4,8 @@ use std::ops::Drop;
 use std::fs::OpenOptions;
 use std::io::Write;
 
+use chrono::prelude::*;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stock {
     name: String,
@@ -26,6 +28,7 @@ impl Drop for Stock {
     fn drop(&mut self) {
         let store = "/home/asui/.config/stockdata/";
         let path: String = format!("{}{}", store, self.name);
+        let datetime: DateTime<Local> = Local::now();
 
         let f = OpenOptions::new()
             .read(true)
@@ -36,6 +39,8 @@ impl Drop for Stock {
 
         if let Ok(mut f) = f {
             let val: String = format!("{}\n", self.value);
+            f.write(datetime.to_rfc2822().as_bytes());
+            f.write("\n".as_bytes());
             f.write(val.as_bytes());
         }
     }
