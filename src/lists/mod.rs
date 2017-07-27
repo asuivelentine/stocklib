@@ -9,6 +9,9 @@ macro_rules! build_list{
         mod $modname {
             use stock::Stock;
             use std::convert::Into;
+            use std::ops::Drop;
+            use std::fs::OpenOptions;
+            use std::io::Write;
 
             use std::fmt::{ Formatter, Debug, Error };
 
@@ -16,13 +19,36 @@ macro_rules! build_list{
             use select::document::Document;
             use select::predicate::{Class, Attr};
             use regex::{RegexBuilder, Regex};
+            use chrono::prelude::*;
 
             pub struct $typename { 
                 indizes: Vec<Stock>,
                 value: f32,
             }
 
-            impl Debug for $typename{
+            impl Drop for $typename {
+                fn drop(&mut self) {
+                    let store = "/home/asui/.config/stockdata/indizes/";
+                    let path: String = format!("{}{}", store, $listname);
+                    let datetime: DateTime<Local> = Local::now();
+
+                    let f = OpenOptions::new()
+                        .read(true)
+                        .write(true)
+                        .append(true)
+                        .create(true)
+                        .open(path);
+
+                    if let Ok(mut f) = f {
+                        let val: String = format!("{}\n", self.value);
+                        f.write(datetime.to_rfc2822().as_bytes());
+                        f.write("\n".as_bytes());
+                        f.write(val.as_bytes());
+                    }
+                }
+            }
+
+            impl Debug for $typename {
                 fn fmt(&self, _: &mut Formatter) -> Result<(), Error> {
                     println!("{}: {}", $listname, self.value);
                     for s in &self.indizes{
