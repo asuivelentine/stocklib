@@ -26,7 +26,7 @@ impl Into<f32> for Stock {
 
 impl Drop for Stock {
     fn drop(&mut self) {
-        let store = "/home/asui/.config/stockdata/";
+        let store = "/home/asui/.config/stockdata/stocks/";
         let path: String = format!("{}{}", store, self.name);
         let datetime: DateTime<Local> = Local::now();
 
