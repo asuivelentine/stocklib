@@ -42,7 +42,7 @@ impl Drop for Stock {
 
         if let Ok(mut f) = f {
             let val: String = format!("{}\n", self.value);
-            flock(f.as_raw_fd(), FlockArg::LockExclusive)
+            let _ = flock(f.as_raw_fd(), FlockArg::LockExclusive)
                 .map(|_| f.write(val.as_bytes()))
                 .map(|_| f.write(datetime.to_rfc2822().as_bytes()))
                 .map(|_| f.write("\n".as_bytes()))
