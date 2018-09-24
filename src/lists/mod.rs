@@ -85,7 +85,7 @@ macro_rules! build_list{
 
 				fn download_source() -> Result<Document> {
 					let downloaded_page = reqwest::get($uri)
-						.map_err(|_| StocklibError::ParseError)?;
+						.map_err(|_| StocklibError::NetworkError)?;
 					Document::from_read(downloaded_page)
 						.map_err(|_| StocklibError::ParseError)
                 }
