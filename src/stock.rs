@@ -7,6 +7,8 @@ use std::os::unix::io::AsRawFd;
 
 use nix::fcntl::{ flock, FlockArg };
 
+use chrono::prelude::*;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stock {
     name: String,
@@ -27,8 +29,9 @@ impl Into<f32> for Stock {
 
 impl Drop for Stock {
     fn drop(&mut self) {
-        let store = "/home/asui/.config/stockdata/";
+        let store = "/home/asui/.config/stockdata/stocks/";
         let path: String = format!("{}{}", store, self.name);
+        let datetime: DateTime<Local> = Local::now();
 
         let f = OpenOptions::new()
             .read(true)
@@ -41,6 +44,8 @@ impl Drop for Stock {
             let val: String = format!("{}\n", self.value);
             flock(f.as_raw_fd(), FlockArg::LockExclusive)
                 .map(|_| f.write(val.as_bytes()))
+                .map(|_| f.write(datetime.to_rfc2822().as_bytes()))
+                .map(|_| f.write("\n".as_bytes()))
                 .map(|_| drop(f) );
         }
     }

@@ -15,6 +15,9 @@ extern crate select;
 extern crate reqwest;
 extern crate regex;
 extern crate nix;
+extern crate chrono;
+#[macro_use] extern crate quick_error;
 
 pub mod stock;
-pub mod dax;
+pub mod lists;
+pub mod error;
