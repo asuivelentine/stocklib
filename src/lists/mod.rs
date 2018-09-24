@@ -15,11 +15,16 @@ macro_rules! build_list{
 
             use std::fmt::{ Formatter, Debug, Error };
 
+            use ::error::StocklibError;
+
             use reqwest;
             use select::document::Document;
             use select::predicate::{Class, Attr};
             use regex::{RegexBuilder, Regex};
             use chrono::prelude::*;
+
+			pub type Result<T> = ::std::result::Result<T, StocklibError>;
+			pub type FmtResult = ::std::result::Result<(), Error>;
 
             pub struct $typename { 
                 indizes: Vec<Stock>,
@@ -41,15 +46,15 @@ macro_rules! build_list{
 
                     if let Ok(mut f) = f {
                         let val: String = format!("{}\n", self.value);
-                        f.write(datetime.to_rfc2822().as_bytes());
-                        f.write("\n".as_bytes());
-                        f.write(val.as_bytes());
+                        let _ = f.write(datetime.to_rfc2822().as_bytes());
+                        let _ = f.write("\n".as_bytes());
+                        let _ = f.write(val.as_bytes());
                     }
                 }
             }
 
             impl Debug for $typename {
-                fn fmt(&self, _: &mut Formatter) -> Result<(), Error> {
+                fn fmt(&self, _: &mut Formatter) -> FmtResult {
                     println!("{}: {}", $listname, self.value);
                     for s in &self.indizes{
                         println!("{:?}", s);
@@ -66,30 +71,26 @@ macro_rules! build_list{
 
             impl $typename {
 
-                pub fn new() -> $typename {
-                    let html = $typename::download_source();
-                    if html.is_err() {
-                        return $typename{
-                            indizes: Vec::new(),
-                            value: -1.234
-                        }
-                    }
+                pub fn new() -> Result<$typename> {
+                    let html = $typename::download_source()?;
+					
+					let indize = $typename::scrape_indizes(&html)?;
+					let list_value = $typename::scrape_value(&html)?;
 
-                    let source = html.unwrap();
-                    $typename {
-                        indizes: $typename::scrape_indizes(&source),
-                        value: $typename::scrape_value(&source)
-                    }
+                    Ok($typename {
+                        indizes: indize,
+                        value: list_value
+                    })
                 }
 
-                fn download_source() -> Result<Document, ()> {
-                    reqwest::get($uri)
-                        .map_err(|_| ())
-                        .and_then(|r| Document::from_read(r)
-                            .map_err(|_| ()))
+				fn download_source() -> Result<Document> {
+					let downloaded_page = reqwest::get($uri)
+						.map_err(|_| StocklibError::ParseError)?;
+					Document::from_read(downloaded_page)
+						.map_err(|_| StocklibError::ParseError)
                 }
 
-                fn scrape_indizes(src: &Document) -> Vec<Stock> {
+                fn scrape_indizes(src: &Document) -> Result<Vec<Stock>> {
                     let pat = RegexBuilder::new(r"/aktie/(.*)-Aktie.*\n(.*\n)*?(\d+,\d+)")
                         .multi_line(true)
                         .build()
@@ -98,28 +99,30 @@ macro_rules! build_list{
                     let x: String = src.find(Class("table-hover"))
                         .next()
                         .map(|x| x.html())
-                        .unwrap_or(String::new());
+						.ok_or_else(|| StocklibError::ParseError)?;
 
-                    pat.captures_iter(&x)
-                        .map(|v| {
-                            let name = String::from(&v[1]);
-                            let value = String::from(&v[3])
-                                .replace(",", ".")
-                                .parse()
-                                .unwrap_or(-1.234);
-                            Stock::new(name, value)
-                        })
-                        .collect()
+					let mut indizes = Vec::new();
+					for v in pat.captures_iter(&x) {
+						let name = String::from(&v[1]);
+						let value = String::from(&v[3])
+							.replace(",", ".")
+							.parse()
+							.map_err(|_| StocklibError::ParseError)?;
+
+						indizes.push(Stock::new(name, value));
+					}
+					Ok(indizes)
+
                 }
 
-                fn scrape_value(src: &Document) -> f32 {
+                fn scrape_value(src: &Document) -> Result<f32> {
                     let pat = Regex::new(r"\d+.\d+,\d").unwrap();
 
                     let val: String = src.find(Attr("data-item", $name))
                         .skip(1)
                         .next()
                         .map(|x| x.html())
-                        .unwrap_or(String::new());
+						.ok_or_else(|| StocklibError::ParseError)?;
 
                     pat.captures(&val)
                         .and_then(|v| {
@@ -127,9 +130,9 @@ macro_rules! build_list{
                                 .replace(".", "")
                                 .replace(",", ".")
                                 .parse()
-                                .ok()
+								.ok()
                         })
-                        .unwrap_or(-1.234)
+						.ok_or_else(|| StocklibError::ParseError)
                 }
             }
         }
